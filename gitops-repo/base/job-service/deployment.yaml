@@ -45,6 +45,10 @@ spec:
               value: "gb"
             - name: JOBS_GREENHOUSE_BOARD_TOKENS
               value: "greenhouse"
+            - name: JOBS_LEVER_ENABLED
+              value: "false"
+            - name: JOBS_ASHBY_ENABLED
+              value: "false"
             - name: JOBS_ADZUNA_APP_ID
               valueFrom:
                 secretKeyRef:
