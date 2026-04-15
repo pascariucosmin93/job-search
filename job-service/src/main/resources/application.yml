@@ -27,5 +27,32 @@ management:
 
 jobs:
   api:
-    base-url: ${JOBS_API_BASE_URL:https://www.arbeitnow.com}
     timeout-ms: ${JOBS_API_TIMEOUT_MS:5000}
+    cache-ttl-seconds: ${JOBS_API_CACHE_TTL_SECONDS:900}
+    filters:
+      exclude-us: ${JOBS_FILTER_EXCLUDE_US:true}
+    arbeitnow:
+      enabled: ${JOBS_ARBEITNOW_ENABLED:true}
+      base-url: ${JOBS_ARBEITNOW_BASE_URL:https://www.arbeitnow.com}
+    remotive:
+      enabled: ${JOBS_REMOTIVE_ENABLED:true}
+      base-url: ${JOBS_REMOTIVE_BASE_URL:https://remotive.com}
+    adzuna:
+      enabled: ${JOBS_ADZUNA_ENABLED:true}
+      base-url: ${JOBS_ADZUNA_BASE_URL:https://api.adzuna.com}
+      country: ${JOBS_ADZUNA_COUNTRY:gb}
+      page: ${JOBS_ADZUNA_PAGE:1}
+      default-query: ${JOBS_ADZUNA_DEFAULT_QUERY:software engineer}
+      app-id: ${JOBS_ADZUNA_APP_ID:}
+      app-key: ${JOBS_ADZUNA_APP_KEY:}
+    greenhouse:
+      enabled: ${JOBS_GREENHOUSE_ENABLED:true}
+      board-tokens: ${JOBS_GREENHOUSE_BOARD_TOKENS:}
+    lever:
+      enabled: ${JOBS_LEVER_ENABLED:true}
+      base-url: ${JOBS_LEVER_BASE_URL:https://api.lever.co}
+      sites: ${JOBS_LEVER_SITES:}
+    ashby:
+      enabled: ${JOBS_ASHBY_ENABLED:true}
+      base-url: ${JOBS_ASHBY_BASE_URL:https://api.ashbyhq.com}
+      board-names: ${JOBS_ASHBY_BOARD_NAMES:}
