@@ -92,14 +92,17 @@ jobs:
           ref: ${{ secrets.GITOPS_REPO_BRANCH || 'main' }}
           path: gitops
 
+      - name: Install yq
+        uses: mikefarah/setup-yq@v1.0.1
+
       - name: Update image tags
         run: |
           for service in job-service auth-service notification-service analytics-service frontend; do
             manifest="gitops/${GITOPS_BASE_PATH}/${service}/deployment.yaml"
             image="${REGISTRY}/${IMAGE_NAMESPACE}/${service}:${GIT_SHA}"
             test -f "${manifest}"
-            sed -i -E "s|(^[[:space:]]*image:[[:space:]]*).*$|\1${image}|" "${manifest}"
-            grep -n "image:" "${manifest}"
+            yq e ".spec.template.spec.containers[0].image = \"${image}\"" -i "${manifest}"
+            echo "${service}: $(yq e '.spec.template.spec.containers[0].image' "${manifest}")"
           done
 
       - name: Commit and push GitOps changes
