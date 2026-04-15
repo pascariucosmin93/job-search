@@ -12,7 +12,6 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: ${{ github.repository_owner }}
-  GIT_SHA: ${{ github.sha }}
   GITOPS_BASE_PATH: base
 
 jobs:
@@ -59,8 +58,53 @@ jobs:
         working-directory: ${{ matrix.service }}
         run: npm test
 
-  build-and-push:
+  version:
     needs: [test-java, test-node]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      image_tag: ${{ steps.bump.outputs.image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute next image version
+        id: bump
+        run: |
+          set -euo pipefail
+
+          existing_on_commit="$(git tag --points-at "${GITHUB_SHA}" --list 'v0.0.*' | head -n1 || true)"
+          if [ -n "${existing_on_commit}" ]; then
+            version="${existing_on_commit#v}"
+            echo "image_tag=${version}" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          latest="$(git tag -l 'v0.0.*' --sort=-v:refname | head -n1 || true)"
+          if [ -z "${latest}" ]; then
+            version="0.0.1"
+          else
+            patch="${latest##*.}"
+            version="0.0.$((patch + 1))"
+          fi
+
+          echo "image_tag=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create and push git tag
+        run: |
+          set -euo pipefail
+          tag="v${{ steps.bump.outputs.image_tag }}"
+          if git rev-parse "${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists locally."
+            exit 0
+          fi
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push origin "${tag}"
+
+  build-and-push:
+    needs: [version]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -86,12 +130,12 @@ jobs:
           context: ./${{ matrix.service }}
           file: ./${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.service }}:${{ env.GIT_SHA }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.service }}:${{ needs.version.outputs.image_tag }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
   update-gitops:
-    needs: build-and-push
+    needs: [build-and-push, version]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout GitOps repo
@@ -104,9 +148,10 @@ jobs:
 
       - name: Update image tags
         run: |
+          image_tag="${{ needs.version.outputs.image_tag }}"
           for service in job-service auth-service notification-service analytics-service frontend; do
             manifest="gitops/${GITOPS_BASE_PATH}/${service}/deployment.yaml"
-            image="${REGISTRY}/${IMAGE_NAMESPACE}/${service}:${GIT_SHA}"
+            image="${REGISTRY}/${IMAGE_NAMESPACE}/${service}:${image_tag}"
             test -f "${manifest}"
             sed -i -E "s|(^[[:space:]]*image:[[:space:]]*)ghcr\.io/.*$|\1${image}|" "${manifest}"
             grep -n "image:" "${manifest}"
@@ -119,5 +164,5 @@ jobs:
           git config user.email "${{ secrets.GITOPS_PUSH_USER }}@users.noreply.github.com"
           git add .
           git diff --cached --quiet && exit 0
-          git commit -m "chore: update deployment images to ${GIT_SHA}"
+          git commit -m "chore: update deployment images to ${{ needs.version.outputs.image_tag }}"
           git push origin HEAD:${{ secrets.GITOPS_REPO_BRANCH || 'main' }}
