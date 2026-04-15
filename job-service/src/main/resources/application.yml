@@ -4,6 +4,16 @@ server:
 spring:
   application:
     name: job-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:jobs}
+    username: ${POSTGRES_USER:devops}
+    password: ${POSTGRES_PASSWORD:gaz}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
 
 management:
   endpoints:
@@ -14,9 +24,3 @@ management:
     health:
       probes:
         enabled: true
-
-app:
-  postgres:
-    host: ${POSTGRES_HOST:postgres.postgres.svc.cluster.local}
-    database: ${POSTGRES_DB:jobs}
-

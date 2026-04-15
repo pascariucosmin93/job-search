@@ -11,8 +11,7 @@ spec:
   project: default
 
   source:
-    # Replace YOUR_GITHUB_USERNAME with the actual owner of the gitops repo.
-    repoURL: https://github.com/YOUR_GITHUB_USERNAME/job-platform-gitops.git
+    repoURL: https://github.com/pascariucosmin93/job-search-gitops.git
     targetRevision: HEAD
     path: base
 
