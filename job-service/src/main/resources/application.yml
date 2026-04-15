@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: job-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+app:
+  postgres:
+    host: ${POSTGRES_HOST:postgres.postgres.svc.cluster.local}
+    database: ${POSTGRES_DB:jobs}
+
