@@ -1,7 +1,7 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json .
-RUN npm install
+RUN npm install && npm cache clean --force
 
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -16,6 +16,6 @@ ENV PORT=3000
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+USER node
 EXPOSE 3000
 CMD ["node", "server.js"]
-

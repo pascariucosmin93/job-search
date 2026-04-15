@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: job-platform
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: job-platform
+spec:
+  project: default
+
+  source:
+    # Replace YOUR_GITHUB_USERNAME with the actual owner of the gitops repo.
+    repoURL: https://github.com/YOUR_GITHUB_USERNAME/job-platform-gitops.git
+    targetRevision: HEAD
+    path: base
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jobs-platform
+
+  syncPolicy:
+    automated:
+      prune: true       # Remove resources deleted from git
+      selfHeal: true    # Revert out-of-band kubectl changes
+    syncOptions:
+      - CreateNamespace=true       # Create jobs-platform namespace if absent
+      - ApplyOutOfSyncOnly=true    # Only apply resources that differ
+      - ServerSideApply=true       # Use server-side apply to avoid annotation bloat
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

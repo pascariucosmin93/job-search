@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-service
+  namespace: jobs-platform
+  labels:
+    app: job-service
+    app.kubernetes.io/name: job-service
+spec:
+  selector:
+    app: job-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

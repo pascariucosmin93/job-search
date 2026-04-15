@@ -1,0 +1,7 @@
+target/
+*.md
+.git
+.github
+.idea/
+*.iml
+*.class
