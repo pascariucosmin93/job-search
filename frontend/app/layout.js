@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Job Alerts & Tech Radar",
-  description: "GitOps-based job alerts and platform radar — cosmin-lab"
+  title: "Engineering Jobs Board",
+  description: "Search engineering jobs via a live free API with filters for location and remote roles."
 };
 
 export default function RootLayout({ children }) {
