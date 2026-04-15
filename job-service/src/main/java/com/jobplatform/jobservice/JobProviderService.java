@@ -178,12 +178,30 @@ public class JobProviderService {
   private List<JobListing> refreshAllProviders() {
     LinkedHashMap<String, JobListing> deduped = new LinkedHashMap<>();
 
-    addAll(deduped, fetchArbeitnowJobs());
-    addAll(deduped, fetchRemotiveJobs());
-    addAll(deduped, fetchAdzunaJobs());
-    addAll(deduped, fetchGreenhouseJobs());
-    addAll(deduped, fetchLeverJobs());
-    addAll(deduped, fetchAshbyJobs());
+    List<JobListing> arbeitnow = fetchArbeitnowJobs();
+    List<JobListing> remotive = fetchRemotiveJobs();
+    List<JobListing> adzuna = fetchAdzunaJobs();
+    List<JobListing> greenhouse = fetchGreenhouseJobs();
+    List<JobListing> lever = fetchLeverJobs();
+    List<JobListing> ashby = fetchAshbyJobs();
+
+    addAll(deduped, arbeitnow);
+    addAll(deduped, remotive);
+    addAll(deduped, adzuna);
+    addAll(deduped, greenhouse);
+    addAll(deduped, lever);
+    addAll(deduped, ashby);
+
+    LOG.info(
+        "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, DedupedTotal={}",
+        arbeitnow.size(),
+        remotive.size(),
+        adzuna.size(),
+        greenhouse.size(),
+        lever.size(),
+        ashby.size(),
+        deduped.size()
+    );
 
     return List.copyOf(deduped.values());
   }
@@ -263,14 +281,17 @@ public class JobProviderService {
     try {
       Map<String, Object> payload = fetchAsMapFromTextCompatibleEndpoint(url, SOURCE_ADZUNA);
       if (!(payload.get("results") instanceof List<?> results)) {
+        LOG.warn("Adzuna response does not contain 'results' array");
         return List.of();
       }
-      return results.stream()
+      List<JobListing> mapped = results.stream()
           .filter(Map.class::isInstance)
           .map(Map.class::cast)
           .map(this::toAdzunaJob)
           .flatMap(Optional::stream)
           .toList();
+      LOG.info("Adzuna fetch succeeded: {} jobs mapped", mapped.size());
+      return mapped;
     } catch (Exception ex) {
       LOG.warn("Adzuna provider unavailable: {}", ex.getMessage());
       return List.of();
