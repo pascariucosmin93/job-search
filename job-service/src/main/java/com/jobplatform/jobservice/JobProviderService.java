@@ -438,8 +438,14 @@ public class JobProviderService {
     String company = nestedValue(source, "company", "display_name");
     String location = nestedValue(source, "location", "display_name");
 
-    if (title.isBlank() || company.isBlank() || jobUrl.isBlank()) {
+    if (title.isBlank()) {
       return Optional.empty();
+    }
+    if (company.isBlank()) {
+      company = "Adzuna Listing";
+    }
+    if (jobUrl.isBlank()) {
+      jobUrl = adzunaFallbackUrl(asString(source.get("id")));
     }
 
     String type = List.of(asString(source.get("contract_type")), asString(source.get("contract_time"))).stream()
@@ -691,6 +697,16 @@ public class JobProviderService {
       return fallback;
     }
     return value.strip();
+  }
+
+  private String adzunaFallbackUrl(String id) {
+    if (id == null || id.isBlank()) {
+      return adzunaBaseUrl + "/v1/doc";
+    }
+    if ("gb".equalsIgnoreCase(adzunaCountry)) {
+      return "https://www.adzuna.co.uk/jobs/details/" + id;
+    }
+    return adzunaBaseUrl + "/v1/doc";
   }
 
   private static boolean asBoolean(Object value) {
