@@ -1,5 +1,7 @@
 package com.jobplatform.jobservice;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -40,6 +43,7 @@ public class JobProviderService {
   private static final String SOURCE_ASHBY = "Ashby";
 
   private final RestClient restClient;
+  private final ObjectMapper objectMapper;
   private final Duration cacheTtl;
   private final boolean excludeUs;
 
@@ -74,6 +78,7 @@ public class JobProviderService {
 
   public JobProviderService(
       RestClient.Builder restClientBuilder,
+      ObjectMapper objectMapper,
       @Value("${jobs.api.timeout-ms:5000}") int timeoutMs,
       @Value("${jobs.api.cache-ttl-seconds:900}") long cacheTtlSeconds,
       @Value("${jobs.api.filters.exclude-us:true}") boolean excludeUs,
@@ -104,6 +109,7 @@ public class JobProviderService {
     this.restClient = restClientBuilder
         .requestFactory(requestFactory)
         .build();
+    this.objectMapper = objectMapper;
 
     this.cacheTtl = Duration.ofSeconds(Math.max(60, cacheTtlSeconds));
     this.excludeUs = excludeUs;
@@ -255,7 +261,7 @@ public class JobProviderService {
         .queryParam("results_per_page", 50)
         .toUriString();
     try {
-      Map<String, Object> payload = fetchAsMap(url);
+      Map<String, Object> payload = fetchAsMapFromTextCompatibleEndpoint(url, SOURCE_ADZUNA);
       if (!(payload.get("results") instanceof List<?> results)) {
         return List.of();
       }
@@ -543,6 +549,27 @@ public class JobProviderService {
         .retrieve()
         .body(new ParameterizedTypeReference<>() {});
     return payload == null ? List.of() : payload;
+  }
+
+  private Map<String, Object> fetchAsMapFromTextCompatibleEndpoint(String url, String providerName) {
+    String body = restClient.get()
+        .uri(url)
+        .accept(MediaType.APPLICATION_JSON)
+        .header("User-Agent", "job-platform-job-service/1.0")
+        .retrieve()
+        .body(String.class);
+
+    if (body == null || body.isBlank()) {
+      return Map.of();
+    }
+
+    try {
+      return objectMapper.readValue(body, new TypeReference<Map<String, Object>>() {});
+    } catch (Exception ex) {
+      String preview = body.length() > 200 ? body.substring(0, 200) + "..." : body;
+      LOG.warn("{} provider returned non-JSON body preview: {}", providerName, preview);
+      throw new IllegalStateException(providerName + " response is not valid JSON", ex);
+    }
   }
 
   private static String nestedValue(Map<?, ?> source, String... path) {
