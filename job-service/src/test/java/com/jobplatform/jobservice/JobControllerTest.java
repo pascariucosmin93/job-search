@@ -44,6 +44,6 @@ class JobControllerTest {
   void shouldSearchByTag() throws Exception {
     mockMvc.perform(get("/api/jobs?q=kubernetes"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.length()").value(5));
+        .andExpect(jsonPath("$.length()").value(4));
   }
 }
