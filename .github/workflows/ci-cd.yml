@@ -18,6 +18,9 @@ env:
 jobs:
   test-java:
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     strategy:
       matrix:
         service: [job-service, auth-service]
@@ -31,6 +34,13 @@ jobs:
       - name: Test ${{ matrix.service }}
         working-directory: ${{ matrix.service }}
         run: mvn -B test
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Tests / ${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/*.xml
+          reporter: java-junit
 
   test-node:
     runs-on: ubuntu-latest
