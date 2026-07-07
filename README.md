@@ -1,5 +1,7 @@
 # Job Alerts & Tech Radar
 
+[![ci-cd](https://github.com/pascariucosmin93/job-search/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/pascariucosmin93/job-search/actions/workflows/ci-cd.yml)
+
 Production-ready GitOps microservices platform. Developers push code; GitHub Actions builds, tests, and publishes images; Argo CD automatically deploys to Kubernetes — no manual `kubectl apply` anywhere in the chain.
 
 ## Architecture
