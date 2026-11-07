@@ -44,6 +44,7 @@ public class JobProviderService {
 
   private final RestClient restClient;
   private final ObjectMapper objectMapper;
+  private final FreeRemoteJobProviders freeRemoteProviders;
   private final Duration cacheTtl;
   private final boolean excludeUs;
 
@@ -79,6 +80,7 @@ public class JobProviderService {
   public JobProviderService(
       RestClient.Builder restClientBuilder,
       ObjectMapper objectMapper,
+      FreeRemoteJobProviders freeRemoteProviders,
       @Value("${jobs.api.timeout-ms:5000}") int timeoutMs,
       @Value("${jobs.api.cache-ttl-seconds:900}") long cacheTtlSeconds,
       @Value("${jobs.api.filters.exclude-us:true}") boolean excludeUs,
@@ -110,6 +112,7 @@ public class JobProviderService {
         .requestFactory(requestFactory)
         .build();
     this.objectMapper = objectMapper;
+    this.freeRemoteProviders = freeRemoteProviders;
 
     this.cacheTtl = Duration.ofSeconds(Math.max(60, cacheTtlSeconds));
     this.excludeUs = excludeUs;
@@ -184,6 +187,10 @@ public class JobProviderService {
     List<JobListing> greenhouse = fetchGreenhouseJobs();
     List<JobListing> lever = fetchLeverJobs();
     List<JobListing> ashby = fetchAshbyJobs();
+    List<JobListing> jobicy = freeRemoteProviders.fetchJobicy();
+    List<JobListing> himalayas = freeRemoteProviders.fetchHimalayas();
+    List<JobListing> remoteOk = freeRemoteProviders.fetchRemoteOk();
+    List<JobListing> workingNomads = freeRemoteProviders.fetchWorkingNomads();
 
     addAll(deduped, arbeitnow);
     addAll(deduped, remotive);
@@ -191,15 +198,23 @@ public class JobProviderService {
     addAll(deduped, greenhouse);
     addAll(deduped, lever);
     addAll(deduped, ashby);
+    addAll(deduped, jobicy);
+    addAll(deduped, himalayas);
+    addAll(deduped, remoteOk);
+    addAll(deduped, workingNomads);
 
     LOG.info(
-        "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, DedupedTotal={}",
+        "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, Jobicy={}, Himalayas={}, RemoteOK={}, WorkingNomads={}, DedupedTotal={}",
         arbeitnow.size(),
         remotive.size(),
         adzuna.size(),
         greenhouse.size(),
         lever.size(),
         ashby.size(),
+        jobicy.size(),
+        himalayas.size(),
+        remoteOk.size(),
+        workingNomads.size(),
         deduped.size()
     );
 

@@ -56,3 +56,17 @@ jobs:
       enabled: ${JOBS_ASHBY_ENABLED:true}
       base-url: ${JOBS_ASHBY_BASE_URL:https://api.ashbyhq.com}
       board-names: ${JOBS_ASHBY_BOARD_NAMES:}
+    jobicy:
+      enabled: ${JOBS_JOBICY_ENABLED:true}
+      base-url: ${JOBS_JOBICY_BASE_URL:https://jobicy.com}
+      count: ${JOBS_JOBICY_COUNT:100}
+    himalayas:
+      enabled: ${JOBS_HIMALAYAS_ENABLED:true}
+      base-url: ${JOBS_HIMALAYAS_BASE_URL:https://himalayas.app}
+      pages: ${JOBS_HIMALAYAS_PAGES:3}
+    remoteok:
+      enabled: ${JOBS_REMOTEOK_ENABLED:true}
+      base-url: ${JOBS_REMOTEOK_BASE_URL:https://remoteok.com}
+    workingnomads:
+      enabled: ${JOBS_WORKINGNOMADS_ENABLED:true}
+      base-url: ${JOBS_WORKINGNOMADS_BASE_URL:https://www.workingnomads.com}
