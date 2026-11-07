@@ -45,6 +45,7 @@ public class JobProviderService {
   private final RestClient restClient;
   private final ObjectMapper objectMapper;
   private final FreeRemoteJobProviders freeRemoteProviders;
+  private final CareerjetProvider careerjetProvider;
   private final Duration cacheTtl;
   private final boolean excludeUs;
 
@@ -81,6 +82,7 @@ public class JobProviderService {
       RestClient.Builder restClientBuilder,
       ObjectMapper objectMapper,
       FreeRemoteJobProviders freeRemoteProviders,
+      CareerjetProvider careerjetProvider,
       @Value("${jobs.api.timeout-ms:5000}") int timeoutMs,
       @Value("${jobs.api.cache-ttl-seconds:900}") long cacheTtlSeconds,
       @Value("${jobs.api.filters.exclude-us:true}") boolean excludeUs,
@@ -113,6 +115,7 @@ public class JobProviderService {
         .build();
     this.objectMapper = objectMapper;
     this.freeRemoteProviders = freeRemoteProviders;
+    this.careerjetProvider = careerjetProvider;
 
     this.cacheTtl = Duration.ofSeconds(Math.max(60, cacheTtlSeconds));
     this.excludeUs = excludeUs;
@@ -191,7 +194,9 @@ public class JobProviderService {
     List<JobListing> himalayas = freeRemoteProviders.fetchHimalayas();
     List<JobListing> remoteOk = freeRemoteProviders.fetchRemoteOk();
     List<JobListing> workingNomads = freeRemoteProviders.fetchWorkingNomads();
+    List<JobListing> careerjet = careerjetProvider.fetchJobs();
 
+    addAll(deduped, careerjet);
     addAll(deduped, arbeitnow);
     addAll(deduped, remotive);
     addAll(deduped, adzuna);
@@ -204,7 +209,7 @@ public class JobProviderService {
     addAll(deduped, workingNomads);
 
     LOG.info(
-        "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, Jobicy={}, Himalayas={}, RemoteOK={}, WorkingNomads={}, DedupedTotal={}",
+        "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, Jobicy={}, Himalayas={}, RemoteOK={}, WorkingNomads={}, Careerjet={}, DedupedTotal={}",
         arbeitnow.size(),
         remotive.size(),
         adzuna.size(),
@@ -215,6 +220,7 @@ public class JobProviderService {
         himalayas.size(),
         remoteOk.size(),
         workingNomads.size(),
+        careerjet.size(),
         deduped.size()
     );
 

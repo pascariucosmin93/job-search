@@ -70,3 +70,14 @@ jobs:
     workingnomads:
       enabled: ${JOBS_WORKINGNOMADS_ENABLED:true}
       base-url: ${JOBS_WORKINGNOMADS_BASE_URL:https://www.workingnomads.com}
+    careerjet:
+      enabled: ${JOBS_CAREERJET_ENABLED:true}
+      base-url: ${JOBS_CAREERJET_BASE_URL:https://search.api.careerjet.net}
+      api-key: ${JOBS_CAREERJET_API_KEY:}
+      locale-code: ${JOBS_CAREERJET_LOCALE:ro_RO}
+      location: ${JOBS_CAREERJET_LOCATION:Romania}
+      keywords: ${JOBS_CAREERJET_KEYWORDS:software developer,devops,java,python,frontend,data engineer}
+      pages: ${JOBS_CAREERJET_PAGES:3}
+      user-ip: ${JOBS_CAREERJET_USER_IP:}
+      user-agent: ${JOBS_CAREERJET_USER_AGENT:job-platform-job-service/1.0}
+      referer: ${JOBS_CAREERJET_REFERER:http://jobs.kube.cosmin.home/}
