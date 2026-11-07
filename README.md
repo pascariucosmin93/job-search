@@ -92,7 +92,7 @@ test-node ──┘
 **Tool:** Kustomize (`base/kustomization.yaml` in the gitops repo)
 
 Every Deployment has:
-- `replicas: 2`
+- `replicas: 1` (raise for HA)
 - `livenessProbe`, `readinessProbe`, and `startupProbe`
 - CPU and memory `requests` and `limits`
 - PostgreSQL credentials injected from the `postgres-credentials` Secret

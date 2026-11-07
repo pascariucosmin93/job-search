@@ -24,3 +24,7 @@ management:
     health:
       probes:
         enabled: true
+
+auth:
+  default-username: ${AUTH_DEFAULT_USERNAME:cosmin}
+  default-password: ${AUTH_DEFAULT_PASSWORD:}
