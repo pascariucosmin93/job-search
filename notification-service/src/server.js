@@ -2,7 +2,7 @@ import express from "express";
 
 const app = express();
 const port = process.env.PORT || 8080;
-const postgresHost = process.env.POSTGRES_HOST || "postgres.postgres.svc.cluster.local";
+const postgresHost = process.env.POSTGRES_HOST || "postgress.cosmin.home";
 
 app.get("/health", (_req, res) => {
   res.json({ status: "UP" });

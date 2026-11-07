@@ -26,7 +26,7 @@ spec:
               name: http
           env:
             - name: POSTGRES_HOST
-              value: "postgres.postgres.svc.cluster.local"
+              value: "postgress.cosmin.home"
             - name: POSTGRES_DB
               value: "auth"
             - name: POSTGRES_USER

@@ -100,7 +100,7 @@ Every Deployment has:
 ### PostgreSQL env vars
 
 ```
-POSTGRES_HOST=postgres.postgres.svc.cluster.local
+POSTGRES_HOST=postgress.cosmin.home
 POSTGRES_DB=<jobs|auth>
 POSTGRES_USER=<from Secret>
 POSTGRES_PASSWORD=<from Secret>
