@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -160,6 +161,16 @@ public class JobProviderService {
         .toList();
   }
 
+  /** Background refresh: fetches from all providers once per hour (configurable). */
+  @Scheduled(
+      initialDelayString = "${jobs.api.refresh-initial-delay-ms:0}",
+      fixedDelayString = "${jobs.api.refresh-interval-ms:3600000}")
+  public void scheduledRefresh() {
+    synchronized (refreshLock) {
+      doRefresh();
+    }
+  }
+
   private List<JobListing> getCachedOrRefresh() {
     if (isCacheFresh()) {
       return cachedJobs;
@@ -169,12 +180,15 @@ public class JobProviderService {
       if (isCacheFresh()) {
         return cachedJobs;
       }
-
-      List<JobListing> refreshed = refreshAllProviders();
-      cachedJobs = refreshed.isEmpty() ? FALLBACK_JOBS : refreshed;
-      cacheUpdatedAt = Instant.now();
-      return cachedJobs;
+      return doRefresh();
     }
+  }
+
+  private List<JobListing> doRefresh() {
+    List<JobListing> refreshed = refreshAllProviders();
+    cachedJobs = refreshed.isEmpty() ? FALLBACK_JOBS : refreshed;
+    cacheUpdatedAt = Instant.now();
+    return cachedJobs;
   }
 
   private boolean isCacheFresh() {
