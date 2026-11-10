@@ -7,11 +7,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,6 +200,7 @@ public class JobProviderService {
 
   private List<JobListing> refreshAllProviders() {
     LinkedHashMap<String, JobListing> deduped = new LinkedHashMap<>();
+    Set<String> seenUrls = new HashSet<>();
 
     List<JobListing> arbeitnow = fetchArbeitnowJobs();
     List<JobListing> remotive = fetchRemotiveJobs();
@@ -210,17 +214,17 @@ public class JobProviderService {
     List<JobListing> workingNomads = freeRemoteProviders.fetchWorkingNomads();
     List<JobListing> careerjet = careerjetProvider.fetchJobs();
 
-    addAll(deduped, careerjet);
-    addAll(deduped, arbeitnow);
-    addAll(deduped, remotive);
-    addAll(deduped, adzuna);
-    addAll(deduped, greenhouse);
-    addAll(deduped, lever);
-    addAll(deduped, ashby);
-    addAll(deduped, jobicy);
-    addAll(deduped, himalayas);
-    addAll(deduped, remoteOk);
-    addAll(deduped, workingNomads);
+    addAll(deduped, seenUrls, careerjet);
+    addAll(deduped, seenUrls, arbeitnow);
+    addAll(deduped, seenUrls, remotive);
+    addAll(deduped, seenUrls, adzuna);
+    addAll(deduped, seenUrls, greenhouse);
+    addAll(deduped, seenUrls, lever);
+    addAll(deduped, seenUrls, ashby);
+    addAll(deduped, seenUrls, jobicy);
+    addAll(deduped, seenUrls, himalayas);
+    addAll(deduped, seenUrls, remoteOk);
+    addAll(deduped, seenUrls, workingNomads);
 
     LOG.info(
         "Job refresh completed: Arbeitnow={}, Remotive={}, Adzuna={}, Greenhouse={}, Lever={}, Ashby={}, Jobicy={}, Himalayas={}, RemoteOK={}, WorkingNomads={}, Careerjet={}, DedupedTotal={}",
@@ -241,15 +245,70 @@ public class JobProviderService {
     return List.copyOf(deduped.values());
   }
 
-  private static void addAll(Map<String, JobListing> target, List<JobListing> jobs) {
+  private static void addAll(
+      Map<String, JobListing> target, Set<String> seenUrls, List<JobListing> jobs) {
     for (JobListing job : jobs) {
-      String key = dedupeKey(job);
-      target.putIfAbsent(key, job);
+      String urlKey = urlKey(job);
+      // Same posting reached through two providers: identical canonical URL.
+      if (urlKey != null && !seenUrls.add(urlKey)) {
+        continue;
+      }
+      target.putIfAbsent(dedupeKey(job), job);
     }
   }
 
+  private static final Pattern GENDER_TAG =
+      Pattern.compile("\\(\\s*[mwfdx][\\s/|*]*[mwfdx]?[\\s/|*]*[mwfdx]?\\s*\\)|\\b[mwfd]\\s*/\\s*[mwfd](\\s*/\\s*[mwfdx])?\\b");
+  private static final Pattern COMPANY_SUFFIX =
+      Pattern.compile("\\b(inc|llc|ltd|limited|gmbh|ag|srl|s\\.r\\.l|sa|bv|b\\.v|plc|corp|corporation|co)\\b\\.?");
+
+  private static String canonical(String value) {
+    String v = normalize(value);
+    v = java.text.Normalizer.normalize(v, java.text.Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
+    return v;
+  }
+
+  private static String canonicalTitle(String title) {
+    String v = GENDER_TAG.matcher(canonical(title)).replaceAll(" ");
+    return v.replaceAll("[^a-z0-9+#]+", " ").strip();
+  }
+
+  private static String canonicalCompany(String company) {
+    String v = COMPANY_SUFFIX.matcher(canonical(company)).replaceAll(" ");
+    return v.replaceAll("[^a-z0-9]+", " ").strip();
+  }
+
+  private static String canonicalLocation(JobListing job) {
+    String v = canonical(job.location()).replaceAll("[^a-z0-9]+", " ").strip();
+    if (job.remote() || v.isEmpty() || v.matches(".*\\b(remote|worldwide|anywhere|global)\\b.*")) {
+      return "remote";
+    }
+    return v;
+  }
+
+  private static String urlKey(JobListing job) {
+    String url = normalize(job.url());
+    if (url.isEmpty()) {
+      return null;
+    }
+    int cut = url.length();
+    for (char c : new char[] {'?', '#'}) {
+      int i = url.indexOf(c);
+      if (i >= 0) {
+        cut = Math.min(cut, i);
+      }
+    }
+    url = url.substring(0, cut).replaceFirst("^https?://(www\\.)?", "");
+    while (url.endsWith("/")) {
+      url = url.substring(0, url.length() - 1);
+    }
+    return url;
+  }
+
   private static String dedupeKey(JobListing job) {
-    return normalize(job.title()) + "|" + normalize(job.company()) + "|" + normalize(job.location());
+    return canonicalTitle(job.title())
+        + "|" + canonicalCompany(job.company())
+        + "|" + canonicalLocation(job);
   }
 
   private List<JobListing> fetchArbeitnowJobs() {
